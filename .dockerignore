@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+bpk_alert_state.json
+data/
+preview/
+__pycache__/
+*.pyc

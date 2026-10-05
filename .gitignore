@@ -1,0 +1,5 @@
+.env
+bpk_alert_state.json
+__pycache__/
+data/
+preview/

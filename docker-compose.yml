@@ -1,0 +1,27 @@
+x-common: &common
+  build: .
+  image: bpk-bank-alert:latest
+  restart: unless-stopped
+  environment:
+    INTERVAL_SEC: 600                        # เช็กทุก 10 นาที
+    STATE_FILE: data/bpk_alert_state.json    # เก็บสถานะใน volume ไม่หายเมื่อสร้าง container ใหม่
+  volumes:
+    - ./.env:/app/.env:ro                    # สคริปต์อ่าน .env เอง (ไม่ฝัง token ใน image)
+    - ./data:/app/data
+  logging:
+    driver: json-file
+    options:
+      max-size: "5m"
+      max-file: "3"
+
+services:
+  # เช็กระดับน้ำทุก INTERVAL_SEC แล้วแจ้งเมื่อสถานะเปลี่ยน
+  bpk-alert:
+    <<: *common
+    container_name: bpk-bank-alert
+
+  # รอรับคำสั่ง /status และปุ่ม "ดูสถานะล่าสุด" บน Telegram
+  bpk-bot:
+    <<: *common
+    container_name: bpk-bank-alert-bot
+    command: ["python", "bpk_bank_alert.py", "--bot"]

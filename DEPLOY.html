@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DEPLOY.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="คู่มือ-deploy--bpk-water-alert-บน-linux-server-docker">คู่มือ Deploy — BPK Water Alert บน Linux Server (Docker)</h1>
+<p>ระบบนี้ทำงานในรูปแบบ Docker container ตัวเดียว ทุก 10 นาที container จะเช็กระดับน้ำสถานีบางปะกง (BPK001) จาก thaiwater.net
+ถ้าสถานะเปลี่ยน จะส่งภาพการ์ดพร้อมกราฟเข้ากลุ่ม Telegram</p>
+<pre class="hljs"><code><div>┌─────────────── Linux Server ───────────────┐
+│  /opt/bpk-alert/                           │
+│   ├─ .env        ← token / chat id / เกณฑ์  │──mount (อ่านอย่างเดียว)──┐
+│   ├─ data/       ← ไฟล์สถานะ (กันแจ้งซ้ำ)    │──mount──────────────────┤
+│   └─ โค้ด + Dockerfile                      │                         ▼
+│                                            │   container: bpk-bank-alert
+│                                            │   วนรอบทุก 600 วินาที
+└────────────────────────────────────────────┘        │            │
+                              HTTPS ขาออก ──────────────┘            │
+                     api-v3.thaiwater.net (ดึงข้อมูล)    api.telegram.org (ส่งแจ้งเตือน)
+</div></code></pre>
+<hr>
+<h2 id="สารบัญ">สารบัญ</h2>
+<ol>
+<li><a href="#1-%E0%B8%AA%E0%B8%B4%E0%B9%88%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%95%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B8%A1">สิ่งที่ต้องเตรียม</a></li>
+<li><a href="#2-%E0%B8%95%E0%B8%B4%E0%B8%94%E0%B8%95%E0%B8%B1%E0%B9%89%E0%B8%87-docker-%E0%B8%9A%E0%B8%99%E0%B9%80%E0%B8%8B%E0%B8%B4%E0%B8%A3%E0%B9%8C%E0%B8%9F%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B9%8C">ติดตั้ง Docker บนเซิร์ฟเวอร์</a></li>
+<li><a href="#3-%E0%B8%95%E0%B8%A3%E0%B8%A7%E0%B8%88%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B9%80%E0%B8%8B%E0%B8%B4%E0%B8%A3%E0%B9%8C%E0%B8%9F%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B8%AD%E0%B8%B4%E0%B8%99%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%99%E0%B9%87%E0%B8%95%E0%B9%84%E0%B8%94%E0%B9%89">ตรวจว่าเซิร์ฟเวอร์ออกอินเทอร์เน็ตได้</a></li>
+<li><a href="#4-%E0%B8%84%E0%B8%B1%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%81%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C%E0%B8%88%E0%B8%B2%E0%B8%81-windows-%E0%B8%82%E0%B8%B6%E0%B9%89%E0%B8%99%E0%B9%80%E0%B8%8B%E0%B8%B4%E0%B8%A3%E0%B9%8C%E0%B8%9F%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B9%8C">คัดลอกไฟล์จาก Windows ขึ้นเซิร์ฟเวอร์</a></li>
+<li><a href="#5-%E0%B8%95%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%AA%E0%B8%B4%E0%B8%97%E0%B8%98%E0%B8%B4%E0%B9%8C%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C-%E0%B8%AA%E0%B8%B3%E0%B8%84%E0%B8%B1%E0%B8%8D">ตั้งสิทธิ์ไฟล์ (สำคัญ)</a></li>
+<li><a href="#6-build-%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%97%E0%B8%94%E0%B8%AA%E0%B8%AD%E0%B8%9A">Build และทดสอบ</a></li>
+<li><a href="#7-%E0%B9%80%E0%B8%A3%E0%B8%B4%E0%B9%88%E0%B8%A1%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%87">เริ่มระบบจริง</a></li>
+<li><a href="#8-%E0%B8%95%E0%B8%A3%E0%B8%A7%E0%B8%88%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%87-deploy-checklist">ตรวจหลัง Deploy (Checklist)</a></li>
+<li><a href="#9-%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%88%E0%B8%B3-%E0%B8%94%E0%B8%B9-log--%E0%B8%AB%E0%B8%A2%E0%B8%B8%E0%B8%94--%E0%B9%80%E0%B8%A3%E0%B8%B4%E0%B9%88%E0%B8%A1%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88">งานประจำ: ดู log / หยุด / เริ่มใหม่</a></li>
+<li><a href="#10-%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%95%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B8%84%E0%B9%88%E0%B8%B2">แก้ค่าตั้งค่า</a></li>
+<li><a href="#11-%E0%B8%AD%E0%B8%B1%E0%B8%9B%E0%B9%80%E0%B8%94%E0%B8%95%E0%B9%82%E0%B8%84%E0%B9%89%E0%B8%94%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B8%8A%E0%B8%B1%E0%B8%99%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88-%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%A2%E0%B9%89%E0%B8%AD%E0%B8%99%E0%B8%81%E0%B8%A5%E0%B8%B1%E0%B8%9A">อัปเดตโค้ดเวอร์ชันใหม่ และย้อนกลับ</a></li>
+<li><a href="#12-%E0%B9%81%E0%B8%81%E0%B9%89%E0%B8%9B%E0%B8%B1%E0%B8%8D%E0%B8%AB%E0%B8%B2%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%9E%E0%B8%9A%E0%B8%9A%E0%B9%88%E0%B8%AD%E0%B8%A2">แก้ปัญหาที่พบบ่อย</a></li>
+<li><a href="#13-%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%9B%E0%B8%A5%E0%B8%AD%E0%B8%94%E0%B8%A0%E0%B8%B1%E0%B8%A2">ความปลอดภัย</a></li>
+<li><a href="#14-%E0%B8%96%E0%B8%AD%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%95%E0%B8%B4%E0%B8%94%E0%B8%95%E0%B8%B1%E0%B9%89%E0%B8%87">ถอนการติดตั้ง</a></li>
+</ol>
+<hr>
+<h2 id="1-สิ่งที่ต้องเตรียม">1. สิ่งที่ต้องเตรียม</h2>
+<table>
+<thead>
+<tr>
+<th>รายการ</th>
+<th>รายละเอียด</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux server</td>
+<td>Ubuntu 22.04/24.04, Debian 12 หรือ RHEL/Rocky/Alma 8–9 ใช้ทรัพยากรน้อยมาก: RAM ~100 MB, ดิสก์ ~300 MB</td>
+</tr>
+<tr>
+<td>สิทธิ์</td>
+<td>บัญชีที่ใช้ <code>sudo</code> ได้ และ SSH เข้าเซิร์ฟเวอร์ได้จากเครื่อง Windows</td>
+</tr>
+<tr>
+<td>อินเทอร์เน็ตขาออก</td>
+<td>HTTPS (443) ไปที่ <code>api-v3.thaiwater.net</code>, <code>api.telegram.org</code> และตอน build ต้องออกไป <code>registry-1.docker.io</code>, <code>deb.debian.org</code>, <code>pypi.org</code></td>
+</tr>
+<tr>
+<td>Telegram</td>
+<td>Bot token จาก @BotFather และ Chat ID ของกลุ่ม ต้องเพิ่มบอท <strong>@bpk_bank_alert_bot</strong> เข้ากลุ่มแล้ว</td>
+</tr>
+<tr>
+<td>ไฟล์โปรเจกต์</td>
+<td>โฟลเดอร์ <code>D:\Awarasoft\Water_Level</code> บนเครื่อง Windows ที่ทดสอบแล้ว</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>อย่ารันพร้อมกันสองที่</strong> ถ้าเคยตั้ง Task Scheduler บน Windows ให้รันสคริปต์นี้ ให้ปิดก่อน ไม่งั้นกลุ่มจะได้รับข้อความซ้ำ</p>
+</blockquote>
+<hr>
+<h2 id="2-ติดตั้ง-docker-บนเซิร์ฟเวอร์">2. ติดตั้ง Docker บนเซิร์ฟเวอร์</h2>
+<p>SSH เข้าเซิร์ฟเวอร์ก่อน:</p>
+<pre class="hljs"><code><div>ssh user@server
+</div></code></pre>
+<p>ถ้ามี Docker อยู่แล้ว ให้ข้ามไปขั้นตอน 2.3</p>
+<h3 id="21-ubuntu--debian">2.1 Ubuntu / Debian</h3>
+<pre class="hljs"><code><div>curl -fsSL https://get.docker.com | <span class="hljs-built_in">sudo</span> sh
+</div></code></pre>
+<h3 id="22-rhel--rocky--alma">2.2 RHEL / Rocky / Alma</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">sudo</span> dnf -y install dnf-plugins-core
+<span class="hljs-built_in">sudo</span> dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+<span class="hljs-built_in">sudo</span> dnf -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+</div></code></pre>
+<h3 id="23-เปิดบริการ-และให้-user-ใช้-docker-ได้โดยไม่ต้อง-sudo">2.3 เปิดบริการ และให้ user ใช้ docker ได้โดยไม่ต้อง sudo</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">sudo</span> systemctl <span class="hljs-built_in">enable</span> --now docker      <span class="hljs-comment"># ให้ Docker เริ่มเองทุกครั้งที่บูตเครื่อง</span>
+<span class="hljs-built_in">sudo</span> usermod -aG docker <span class="hljs-variable">$USER</span>           <span class="hljs-comment"># เพิ่มตัวเองเข้ากลุ่ม docker</span>
+<span class="hljs-built_in">exit</span>                                    <span class="hljs-comment"># ออกแล้ว SSH เข้าใหม่ สิทธิ์กลุ่มจึงจะมีผล</span>
+</div></code></pre>
+<p>ตรวจผล:</p>
+<pre class="hljs"><code><div>docker --version
+docker compose version                  <span class="hljs-comment"># ต้องเป็น v2 ขึ้นไป</span>
+docker run --<span class="hljs-built_in">rm</span> hello-world             <span class="hljs-comment"># ต้องเห็นข้อความ &quot;Hello from Docker!&quot;</span>
+</div></code></pre>
+<hr>
+<h2 id="3-ตรวจว่าเซิร์ฟเวอร์ออกอินเทอร์เน็ตได้">3. ตรวจว่าเซิร์ฟเวอร์ออกอินเทอร์เน็ตได้</h2>
+<pre class="hljs"><code><div>curl -sS -o /dev/null -w <span class="hljs-string">&quot;thaiwater: %{http_code}\n&quot;</span> \
+  <span class="hljs-string">&quot;https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load&quot;</span>
+curl -sS -o /dev/null -w <span class="hljs-string">&quot;telegram:  %{http_code}\n&quot;</span> https://api.telegram.org
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>ผลที่ได้</th>
+<th>ความหมาย</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>thaiwater: 200</code> และ <code>telegram: 302</code> (หรือ 200)</td>
+<td>ใช้ได้ ไปขั้นตอนต่อไป</td>
+</tr>
+<tr>
+<td><code>Could not resolve host</code></td>
+<td>DNS ของเซิร์ฟเวอร์ใช้ไม่ได้ ติดต่อทีม network</td>
+</tr>
+<tr>
+<td>ค้างนานแล้ว timeout</td>
+<td>firewall บล็อก หรือต้องผ่าน proxy ดู <a href="#127-%E0%B8%95%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%80%E0%B8%99%E0%B9%87%E0%B8%95%E0%B8%9C%E0%B9%88%E0%B8%B2%E0%B8%99-proxy">12.7</a></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-คัดลอกไฟล์จาก-windows-ขึ้นเซิร์ฟเวอร์">4. คัดลอกไฟล์จาก Windows ขึ้นเซิร์ฟเวอร์</h2>
+<h3 id="41-ไฟล์ที่ต้องส่งขึ้น">4.1 ไฟล์ที่ต้องส่งขึ้น</h3>
+<table>
+<thead>
+<tr>
+<th>ไฟล์ / โฟลเดอร์</th>
+<th style="text-align:center">ส่ง?</th>
+<th>หมายเหตุ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bpk_bank_alert.py</code></td>
+<td style="text-align:center">✅</td>
+<td>สคริปต์หลัก</td>
+</tr>
+<tr>
+<td><code>alert_card.py</code></td>
+<td style="text-align:center">✅</td>
+<td>ตัววาดภาพการ์ด + กราฟ</td>
+</tr>
+<tr>
+<td><code>fonts/</code></td>
+<td style="text-align:center">✅</td>
+<td>ฟอนต์ Sarabun ต้องส่งทั้งโฟลเดอร์ ไม่งั้นภาพไม่มีตัวหนังสือไทย</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code>, <code>docker-compose.yml</code>, <code>.dockerignore</code></td>
+<td style="text-align:center">✅</td>
+<td></td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td style="text-align:center">✅</td>
+<td>ไว้เทียบค่าตั้งค่า</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td style="text-align:center">✅</td>
+<td>มี token ต้องส่งด้วยช่องทางที่ปลอดภัย (scp) เท่านั้น</td>
+</tr>
+<tr>
+<td><code>bpk_alert_state.json</code>, <code>data/</code></td>
+<td style="text-align:center">❌</td>
+<td>สถานะของเครื่องทดสอบ ให้เซิร์ฟเวอร์เริ่มนับใหม่</td>
+</tr>
+<tr>
+<td><code>preview/</code>, <code>__pycache__/</code></td>
+<td style="text-align:center">❌</td>
+<td>ไฟล์ชั่วคราว</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-สร้างโฟลเดอร์ปลายทางบนเซิร์ฟเวอร์">4.2 สร้างโฟลเดอร์ปลายทางบนเซิร์ฟเวอร์</h3>
+<p>เปิด <strong>PowerShell</strong> บนเครื่อง Windows:</p>
+<pre class="hljs"><code><div>ssh <span class="hljs-literal">-t</span> user@server <span class="hljs-string">&#x27;sudo mkdir -p /opt/bpk-alert &amp;&amp; sudo chown $(id -u):$(id -g) /opt/bpk-alert&#x27;</span>
+</div></code></pre>
+<blockquote>
+<p>ใช้ <code>'...'</code> (single quote) เพื่อให้ <code>$(id -u)</code> ไปทำงานบนเซิร์ฟเวอร์ ไม่ใช่บน PowerShell</p>
+</blockquote>
+<h3 id="43-คัดลอกไฟล์">4.3 คัดลอกไฟล์</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> D:\Awarasoft\Water_Level
+scp <span class="hljs-literal">-r</span> bpk_bank_alert.py alert_card.py fonts Dockerfile docker<span class="hljs-literal">-compose</span>.yml .dockerignore .env.example .env user@server:/opt/bpk<span class="hljs-literal">-alert</span>/
+</div></code></pre>
+<p>ถ้าไม่สะดวกใช้คำสั่ง ใช้โปรแกรม <strong>WinSCP</strong> ลากไฟล์ตามตารางข้อ 4.1 ไปไว้ที่ <code>/opt/bpk-alert/</code> ก็ได้
+ถ้ามองไม่เห็นไฟล์ <code>.env</code> ใน WinSCP ให้เปิด <em>Options → Preferences → Panels → Show hidden files</em></p>
+<h3 id="44-ตรวจบนเซิร์ฟเวอร์">4.4 ตรวจบนเซิร์ฟเวอร์</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+<span class="hljs-built_in">ls</span> -la
+<span class="hljs-built_in">ls</span> fonts            <span class="hljs-comment"># ต้องมี Sarabun-Regular.ttf, Sarabun-Bold.ttf, Sarabun-ExtraBold.ttf</span>
+</div></code></pre>
+<hr>
+<h2 id="5-ตั้งสิทธิ์ไฟล์-สำคัญ">5. ตั้งสิทธิ์ไฟล์ (สำคัญ)</h2>
+<p>ในตัว container ระบบรันด้วย user <strong>uid 1000</strong> (ไม่ใช่ root) uid นี้จึงต้องเขียนโฟลเดอร์ <code>data/</code> ได้ และอ่าน <code>.env</code> ได้</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+<span class="hljs-built_in">id</span> -u                       <span class="hljs-comment"># ดูว่า user ของคุณมี uid อะไร</span>
+</div></code></pre>
+<p><strong>กรณี A: ได้ <code>1000</code></strong> (พบบ่อยที่สุด user คนแรกของเครื่องมักเป็น 1000)</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">mkdir</span> -p data
+<span class="hljs-built_in">chmod</span> 600 .<span class="hljs-built_in">env</span>              <span class="hljs-comment"># ให้อ่านได้เฉพาะเจ้าของ</span>
+</div></code></pre>
+<p><strong>กรณี B: ได้เลขอื่น</strong></p>
+<pre class="hljs"><code><div><span class="hljs-built_in">mkdir</span> -p data
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> 1000:1000 data .<span class="hljs-built_in">env</span>
+<span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chmod</span> 600 .<span class="hljs-built_in">env</span>
+<span class="hljs-comment"># จากนี้ถ้าจะแก้ .env ต้องใช้ sudo เช่น  sudo nano .env</span>
+</div></code></pre>
+<blockquote>
+<p>⚠️ <strong>ห้ามข้ามขั้นนี้ ถ้าตั้งสิทธิ์ผิดจะเกิดปัญหาต่อไปนี้</strong></p>
+<ul>
+<li>ถ้าไม่สร้าง <code>data/</code> เอง Docker จะสร้างให้เป็นของ root แล้ว container เขียนไฟล์สถานะไม่ได้ ตอนนี้สคริปต์จะหยุดพร้อมแจ้ง <code>เขียนไฟล์สถานะ ... ไม่ได้</code> เพื่อกันไม่ให้แจ้งเตือนซ้ำทุกรอบ แต่ระบบก็จะไม่ทำงานจนกว่าจะแก้สิทธิ์</li>
+<li>ถ้า uid 1000 อ่าน <code>.env</code> ไม่ได้ สคริปต์จะไม่เห็น token แล้วขึ้น <code>!! ยังไม่ได้ตั้ง TELEGRAM_BOT_TOKEN</code></li>
+</ul>
+</blockquote>
+<p><strong>เฉพาะ RHEL / Rocky / Alma ที่เปิด SELinux</strong> (ตรวจด้วย <code>getenforce</code> ถ้าได้ <code>Enforcing</code> ให้ทำข้อนี้):
+แก้ <code>docker-compose.yml</code> เติม <code>:z</code> ท้าย volume ทั้งสองบรรทัด ไม่งั้น container จะอ่านหรือเขียนไฟล์ไม่ได้</p>
+<pre class="hljs"><code><div>    <span class="hljs-attr">volumes:</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">./.env:/app/.env:ro,z</span>
+      <span class="hljs-bullet">-</span> <span class="hljs-string">./data:/app/data:z</span>
+</div></code></pre>
+<hr>
+<h2 id="6-build-และทดสอบ">6. Build และทดสอบ</h2>
+<h3 id="61-build-image">6.1 Build image</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker compose build
+</div></code></pre>
+<p>ครั้งแรกใช้เวลา 1–3 นาที ต้องเห็นบรรทัดสุดท้ายเป็น <code>Image bpk-bank-alert:latest Built</code></p>
+<h3 id="62-ตรวจว่าภาษาไทยในภาพจะแสดงถูก">6.2 ตรวจว่าภาษาไทยในภาพจะแสดงถูก</h3>
+<pre class="hljs"><code><div>docker compose run --<span class="hljs-built_in">rm</span> bpk-alert python -c <span class="hljs-string">&quot;from PIL import features; print(&#x27;raqm:&#x27;, features.check(&#x27;raqm&#x27;))&quot;</span>
+</div></code></pre>
+<p>ต้องได้ <code>raqm: True</code> ถ้าได้ <code>False</code> สระและวรรณยุกต์ในภาพจะซ้อนกันเพี้ยน ดู <a href="#125-%E0%B8%A0%E0%B8%B2%E0%B8%9E%E0%B8%A1%E0%B8%B5%E0%B8%AA%E0%B8%A3%E0%B8%B0%E0%B8%A7%E0%B8%A3%E0%B8%A3%E0%B8%93%E0%B8%A2%E0%B8%B8%E0%B8%81%E0%B8%95%E0%B9%8C%E0%B9%84%E0%B8%97%E0%B8%A2%E0%B9%80%E0%B8%9E%E0%B8%B5%E0%B9%89%E0%B8%A2%E0%B8%99">12.5</a></p>
+<h3 id="63-ตรวจเวลา">6.3 ตรวจเวลา</h3>
+<pre class="hljs"><code><div>docker compose run --<span class="hljs-built_in">rm</span> bpk-alert <span class="hljs-built_in">date</span>
+</div></code></pre>
+<p>ต้องเป็นเวลาไทยและลงท้ายด้วย <code>+07</code> (container ตั้ง <code>TZ=Asia/Bangkok</code> เอง ไม่ขึ้นกับ timezone ของเซิร์ฟเวอร์)</p>
+<h3 id="64-ส่งข้อความทดสอบเข้ากลุ่ม">6.4 ส่งข้อความทดสอบเข้ากลุ่ม</h3>
+<pre class="hljs"><code><div>docker compose run --<span class="hljs-built_in">rm</span> bpk-alert python bpk_bank_alert.py --<span class="hljs-built_in">test</span>
+</div></code></pre>
+<ul>
+<li>บนจอจะแสดงข้อความทดสอบ</li>
+<li>ในกลุ่ม Telegram ต้องได้<strong>ภาพการ์ด &quot;ทดสอบระบบแจ้งเตือน&quot; พร้อมกราฟ</strong></li>
+<li>ถ้าได้เป็นข้อความอย่างเดียวไม่มีภาพ ดู <a href="#124-%E0%B9%84%E0%B8%94%E0%B9%89%E0%B8%82%E0%B9%89%E0%B8%AD%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B9%81%E0%B8%95%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%A0%E0%B8%B2%E0%B8%9E">12.4</a></li>
+<li>ถ้าขึ้น <code>Telegram error</code> ดู <a href="#121-telegram-error-400-chat-not-found">12.1</a>–<a href="#122-telegram-error-401-unauthorized">12.2</a></li>
+</ul>
+<h3 id="65-ไม่บังคับ-ดูภาพตัวอย่างครบทุกสถานะ">6.5 (ไม่บังคับ) ดูภาพตัวอย่างครบทุกสถานะ</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">mkdir</span> -p preview &amp;&amp; [ <span class="hljs-string">&quot;<span class="hljs-subst">$(id -u)</span>&quot;</span> = 1000 ] || <span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> 1000:1000 preview
+docker compose run --<span class="hljs-built_in">rm</span> -v ./preview:/app/preview bpk-alert python bpk_bank_alert.py --preview
+</div></code></pre>
+<p>ได้ไฟล์ <code>ok.png</code>, <code>risk.png</code>, <code>avoid.png</code>, <code>stale.png</code> ในโฟลเดอร์ <code>preview/</code> ดึงกลับมาดูบน Windows ได้ด้วย
+<code>scp -r user@server:/opt/bpk-alert/preview .</code> (ขั้นนี้ไม่ส่งอะไรเข้ากลุ่ม)</p>
+<hr>
+<h2 id="7-เริ่มระบบจริง">7. เริ่มระบบจริง</h2>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker compose up -d
+</div></code></pre>
+<ul>
+<li><code>-d</code> = รันเบื้องหลัง ปิดหน้าต่าง SSH ได้</li>
+<li>ตั้ง <code>restart: unless-stopped</code> ไว้แล้ว ถ้ารีบูตเซิร์ฟเวอร์หรือ Docker restart ระบบจะกลับมารันเอง (ต้องเปิด <code>systemctl enable docker</code> ตามข้อ 2.3)</li>
+<li><strong>รอบแรก</strong>ระบบจะบันทึกสถานะเริ่มต้นเฉย ๆ และจะไม่ส่งอะไรถ้าน้ำปกติ จะแจ้งทันทีเฉพาะกรณีน้ำใกล้หรือเกินตลิ่งอยู่แล้ว</li>
+</ul>
+<hr>
+<h2 id="8-ตรวจหลัง-deploy-checklist">8. ตรวจหลัง Deploy (Checklist)</h2>
+<pre class="hljs"><code><div>docker compose ps                       <span class="hljs-comment"># STATUS ต้องเป็น Up</span>
+docker compose logs --<span class="hljs-built_in">tail</span> 20           <span class="hljs-comment"># ดูผลรอบล่าสุด</span>
+<span class="hljs-built_in">cat</span> data/bpk_alert_state.json           <span class="hljs-comment"># ต้องมีไฟล์นี้หลังรอบแรก</span>
+</div></code></pre>
+<p>log ที่ปกติจะออกมาหนึ่งบรรทัดต่อรอบ (ทุก 10 นาที):</p>
+<pre class="hljs"><code><div>2026-10-05 16:07 1.02 ม. | ห่างตลิ่ง 65 ซม. | สถานะ normal | ส่ง 0 ข้อความ
+</div></code></pre>
+<ul>
+<li><input type="checkbox" id="checkbox0"><label for="checkbox0"><code>docker compose ps</code> ขึ้น <code>Up</code></label></li>
+<li><input type="checkbox" id="checkbox1"><label for="checkbox1">ข้อความทดสอบในข้อ 6.4 เข้ากลุ่มเป็นภาพ</label></li>
+<li><input type="checkbox" id="checkbox2"><label for="checkbox2">มีไฟล์ <code>data/bpk_alert_state.json</code> และค่า <code>checked</code> เป็นเวลาล่าสุด</label></li>
+<li><input type="checkbox" id="checkbox3"><label for="checkbox3">รอ 10 นาทีแล้วดู log อีกครั้ง ต้องมีบรรทัดใหม่เพิ่ม</label></li>
+<li><input type="checkbox" id="checkbox4"><label for="checkbox4">ทดสอบรีบูต (ถ้าทำได้): <code>sudo reboot</code> แล้วเข้ามาดู <code>docker compose ps</code> ต้องกลับมา <code>Up</code> เอง</label></li>
+<li><input type="checkbox" id="checkbox5"><label for="checkbox5">ปิด Task Scheduler บน Windows แล้ว (ถ้าเคยตั้งไว้)</label></li>
+</ul>
+<hr>
+<h2 id="9-งานประจำ-ดู-log--หยุด--เริ่มใหม่">9. งานประจำ: ดู log / หยุด / เริ่มใหม่</h2>
+<p>ทุกคำสั่งต้องรันในโฟลเดอร์ <code>/opt/bpk-alert</code></p>
+<table>
+<thead>
+<tr>
+<th>ต้องการ</th>
+<th>คำสั่ง</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ดูสถานะ</td>
+<td><code>docker compose ps</code></td>
+</tr>
+<tr>
+<td>ดู log ล่าสุด</td>
+<td><code>docker compose logs --tail 50</code></td>
+</tr>
+<tr>
+<td>ดู log แบบสด (Ctrl+C เพื่อออก)</td>
+<td><code>docker compose logs -f</code></td>
+</tr>
+<tr>
+<td>ดูเฉพาะ error</td>
+<td><code>docker compose logs | grep -iE &quot;error|ไม่สำเร็จ|Traceback&quot;</code></td>
+</tr>
+<tr>
+<td>ดูสถานะล่าสุดที่บันทึก</td>
+<td><code>cat data/bpk_alert_state.json</code></td>
+</tr>
+<tr>
+<td>ส่งข้อความทดสอบ</td>
+<td><code>docker compose run --rm bpk-alert python bpk_bank_alert.py --test</code></td>
+</tr>
+<tr>
+<td>หยุดชั่วคราว</td>
+<td><code>docker compose stop</code></td>
+</tr>
+<tr>
+<td>เริ่มต่อ</td>
+<td><code>docker compose start</code></td>
+</tr>
+<tr>
+<td>เริ่มใหม่ (เช่น หลังแก้ <code>.env</code>)</td>
+<td><code>docker compose restart</code></td>
+</tr>
+<tr>
+<td>หยุดและลบ container (ไฟล์ใน <code>data/</code> ยังอยู่)</td>
+<td><code>docker compose down</code></td>
+</tr>
+</tbody>
+</table>
+<p>log ถูกจำกัดขนาดไว้ที่ 5 MB × 3 ไฟล์ จึงไม่กินดิสก์จนเต็ม</p>
+<hr>
+<h2 id="10-แก้ค่าตั้งค่า">10. แก้ค่าตั้งค่า</h2>
+<h3 id="101-ค่าใน-env">10.1 ค่าใน <code>.env</code></h3>
+<pre class="hljs"><code><div>nano .<span class="hljs-built_in">env</span>               <span class="hljs-comment"># กรณี B ในข้อ 5 ใช้: sudo nano .env</span>
+docker compose restart
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>ค่า</th>
+<th>ค่าเริ่มต้น</th>
+<th>ความหมาย</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TELEGRAM_BOT_TOKEN</code></td>
+<td>–</td>
+<td>Token บอท</td>
+</tr>
+<tr>
+<td><code>TELEGRAM_CHAT_ID</code></td>
+<td>–</td>
+<td>Chat ID ของกลุ่ม ถ้ามีหลายกลุ่มให้คั่นด้วย <code>,</code></td>
+</tr>
+<tr>
+<td><code>STATION_CODE</code></td>
+<td><code>BPK001</code></td>
+<td>รหัสสถานี</td>
+</tr>
+<tr>
+<td><code>NEAR_M</code></td>
+<td><code>0.30</code></td>
+<td>ห่างตลิ่งน้อยกว่านี้ (เมตร) ถือว่า <strong>เสี่ยง</strong></td>
+</tr>
+<tr>
+<td><code>HYSTERESIS_M</code></td>
+<td><code>0.05</code></td>
+<td>ต้องลดลงอีกเท่านี้จึงนับว่ากลับปกติ (กันแจ้งเตือนสลับไปมา)</td>
+</tr>
+<tr>
+<td><code>REPEAT_STEP_M</code></td>
+<td><code>0.10</code></td>
+<td>ระหว่างอยู่ในสถานะเตือน ถ้าน้ำขึ้นอีกเท่านี้จะแจ้งซ้ำ</td>
+</tr>
+<tr>
+<td><code>STALE_H</code></td>
+<td><code>2</code></td>
+<td>สถานีไม่ส่งค่าใหม่เกินกี่ชั่วโมงจึงแจ้งว่าข้อมูลไม่อัปเดต</td>
+</tr>
+<tr>
+<td><code>ALERT_IMAGE</code></td>
+<td><code>1</code></td>
+<td><code>1</code> = ส่งเป็นภาพ, <code>0</code> = ส่งข้อความอย่างเดียว</td>
+</tr>
+<tr>
+<td><code>GRAPH_HOURS</code></td>
+<td><code>24</code></td>
+<td>กราฟย้อนหลังกี่ชั่วโมง</td>
+</tr>
+<tr>
+<td><code>ROAD_NAME</code></td>
+<td>(ว่าง)</td>
+<td>ชื่อจุดหรือถนนที่ต้องระวัง จะแสดงบนแถบสีด้านบนของภาพ</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>แนะนำให้ <code>restart</code> ทุกครั้งหลังแก้ <code>.env</code> เพราะ editor บางตัว (เช่น vim) บันทึกเป็นไฟล์ใหม่ แล้ว container จะยังเห็นไฟล์เดิมอยู่</p>
+</blockquote>
+<h3 id="102-ค่าใน-docker-composeyml">10.2 ค่าใน <code>docker-compose.yml</code></h3>
+<table>
+<thead>
+<tr>
+<th>ค่า</th>
+<th>ค่าเริ่มต้น</th>
+<th>ความหมาย</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>INTERVAL_SEC</code></td>
+<td><code>600</code></td>
+<td>เช็กทุกกี่วินาที (ไม่ควรต่ำกว่า 300 เพราะสถานีส่งค่าทุก 10 นาที)</td>
+</tr>
+<tr>
+<td><code>STATE_FILE</code></td>
+<td><code>data/bpk_alert_state.json</code></td>
+<td>ไฟล์สถานะ ไม่ต้องแก้</td>
+</tr>
+</tbody>
+</table>
+<p>หลังแก้ไฟล์นี้ต้องใช้ <code>docker compose up -d</code> (<code>restart</code> อย่างเดียวจะไม่อ่านค่าใหม่)</p>
+<hr>
+<h2 id="11-อัปเดตโค้ดเวอร์ชันใหม่-และย้อนกลับ">11. อัปเดตโค้ดเวอร์ชันใหม่ และย้อนกลับ</h2>
+<h3 id="111-อัปเดต">11.1 อัปเดต</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># บนเซิร์ฟเวอร์: เก็บ image เดิมไว้เผื่อย้อนกลับ</span>
+<span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker tag bpk-bank-alert:latest bpk-bank-alert:prev
+</div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># บน Windows: ส่งเฉพาะไฟล์ที่เปลี่ยน (ปกติไม่ต้องส่ง .env ซ้ำ)</span>
+<span class="hljs-built_in">cd</span> D:\Awarasoft\Water_Level
+scp bpk_bank_alert.py alert_card.py Dockerfile docker<span class="hljs-literal">-compose</span>.yml user@server:/opt/bpk<span class="hljs-literal">-alert</span>/
+</div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># บนเซิร์ฟเวอร์: build ใหม่และสลับ container</span>
+<span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker compose up -d --build
+docker compose run --<span class="hljs-built_in">rm</span> bpk-alert python bpk_bank_alert.py --<span class="hljs-built_in">test</span>   <span class="hljs-comment"># ยืนยันว่ายังส่งได้</span>
+docker compose logs --<span class="hljs-built_in">tail</span> 5
+</div></code></pre>
+<p>ไฟล์สถานะใน <code>data/</code> ยังอยู่ อัปเดตแล้วจึงไม่แจ้งเตือนซ้ำ</p>
+<h3 id="112-ย้อนกลับเวอร์ชันเดิม">11.2 ย้อนกลับเวอร์ชันเดิม</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker tag bpk-bank-alert:prev bpk-bank-alert:latest
+docker compose up -d --no-build --force-recreate
+</div></code></pre>
+<h3 id="113-ล้าง-image-เก่าที่ไม่ใช้-นาน-ๆ-ครั้ง">11.3 ล้าง image เก่าที่ไม่ใช้ (นาน ๆ ครั้ง)</h3>
+<pre class="hljs"><code><div>docker image prune -f
+</div></code></pre>
+<hr>
+<h2 id="12-แก้ปัญหาที่พบบ่อย">12. แก้ปัญหาที่พบบ่อย</h2>
+<p>เริ่มจากดู log ทุกครั้ง: <code>docker compose logs --tail 50</code></p>
+<h3 id="121-telegram-error-400--chat-not-found">12.1 <code>Telegram error: 400 ... chat not found</code></h3>
+<p>บอทไม่ได้อยู่ในกลุ่ม หรือ Chat ID ผิด</p>
+<ul>
+<li>เพิ่ม <strong>@bpk_bank_alert_bot</strong> เข้ากลุ่ม แล้วพิมพ์ <code>/start@bpk_bank_alert_bot</code> ในกลุ่ม</li>
+<li>เปิด <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> ดูค่า <code>&quot;chat&quot;:{&quot;id&quot;: ...}</code> แล้วนำไปใส่ <code>TELEGRAM_CHAT_ID</code></li>
+<li>ถ้าเห็น <code>migrate_to_chat_id</code> แปลว่ากลุ่มถูกอัปเกรดเป็น supergroup ให้ใช้ ID ใหม่ที่ขึ้นต้นด้วย <code>-100</code></li>
+</ul>
+<h3 id="122-telegram-error-401-unauthorized">12.2 <code>Telegram error: 401 Unauthorized</code></h3>
+<p>Token ผิดหรือถูกยกเลิก ขอ token ใหม่จาก @BotFather แล้วแก้ใน <code>.env</code></p>
+<h3 id="123--ยังไม่ได้ตั้ง-telegram_bot_token--telegram_chat_id">12.3 <code>!! ยังไม่ได้ตั้ง TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID</code></h3>
+<p>container มองไม่เห็นหรืออ่าน <code>.env</code> ไม่ได้</p>
+<ul>
+<li>ตรวจว่ามีไฟล์จริง: <code>ls -la /opt/bpk-alert/.env</code></li>
+<li>ตรวจสิทธิ์ตามข้อ 5: uid 1000 ต้องอ่านได้</li>
+<li>บน SELinux ให้เติม <code>:z</code> ตามข้อ 5</li>
+<li>ทดสอบ: <code>docker compose run --rm bpk-alert sh -c &quot;test -r .env &amp;&amp; echo OK || echo NO&quot;</code> ต้องได้ <code>OK</code> ถ้าได้ <code>NO</code> แปลว่าติดเรื่องสิทธิ์</li>
+</ul>
+<h3 id="124-ได้ข้อความแต่ไม่มีภาพ">12.4 ได้ข้อความแต่ไม่มีภาพ</h3>
+<p>ใน log จะมีบรรทัด <code>สร้างภาพไม่สำเร็จ ส่งเป็นข้อความแทน: ...</code> ระบบออกแบบให้ยังส่งข้อความได้แม้ภาพพัง ดูสาเหตุท้ายบรรทัด:</p>
+<ul>
+<li><code>cannot open resource</code> / ไม่พบไฟล์ฟอนต์: ลืมส่งโฟลเดอร์ <code>fonts/</code> ให้ส่งขึ้นไปแล้ว <code>docker compose up -d --build</code></li>
+<li><code>ดึงกราฟย้อนหลังไม่สำเร็จ</code>: API กราฟของ thaiwater ล่มชั่วคราว ภาพยังส่งได้แต่ช่องกราฟจะเขียนว่า &quot;ไม่มีข้อมูลกราฟย้อนหลัง&quot;</li>
+</ul>
+<h3 id="125-ภาพมีสระวรรณยุกต์ไทยเพี้ยน">12.5 ภาพมีสระ/วรรณยุกต์ไทยเพี้ยน</h3>
+<p>ข้อ 6.2 ได้ <code>raqm: False</code> แปลว่าใน image ไม่มี <code>libfribidi0</code> ตรวจว่า Dockerfile มีบรรทัด <code>apt-get install ... libfribidi0</code> แล้ว build ใหม่ด้วย <code>docker compose build --no-cache</code></p>
+<h3 id="126-เขียนไฟล์สถานะ-databpk_alert_statejson-ไม่ได้-permission-denied">12.6 <code>เขียนไฟล์สถานะ data/bpk_alert_state.json ไม่ได้ (Permission denied)</code></h3>
+<p>โฟลเดอร์ <code>data/</code> ไม่ใช่ของ uid 1000:</p>
+<pre class="hljs"><code><div><span class="hljs-built_in">sudo</span> <span class="hljs-built_in">chown</span> -R 1000:1000 /opt/bpk-alert/data
+</div></code></pre>
+<p>(สคริปต์หยุดก่อนส่งข้อความ เพื่อไม่ให้แจ้งเตือนซ้ำทุกรอบ)</p>
+<h3 id="127-ต้องออกเน็ตผ่าน-proxy">12.7 ต้องออกเน็ตผ่าน proxy</h3>
+<p>ตอนรัน: เพิ่มใน <code>docker-compose.yml</code> ใต้ <code>environment:</code></p>
+<pre class="hljs"><code><div>      <span class="hljs-attr">HTTPS_PROXY:</span> <span class="hljs-string">http://proxy.company.local:8080</span>
+      <span class="hljs-attr">HTTP_PROXY:</span> <span class="hljs-string">http://proxy.company.local:8080</span>
+</div></code></pre>
+<p>ตอน build (ดึง image / apt / pip):</p>
+<pre class="hljs"><code><div>docker compose build --build-arg HTTPS_PROXY=http://proxy.company.local:8080 \
+                     --build-arg HTTP_PROXY=http://proxy.company.local:8080
+</div></code></pre>
+<p>ถ้า <code>docker pull</code> ไม่ผ่าน ต้องตั้ง proxy ให้ Docker daemon ด้วย ดูคู่มือ Docker หัวข้อ <em>Configure the daemon to use a proxy</em></p>
+<h3 id="128-ดึงข้อมูล-thaiwater-ไม่ได้-connectionerror-timeout-ไม่พบสถานี-bpk001">12.8 ดึงข้อมูล thaiwater ไม่ได้ (<code>ConnectionError</code>, <code>Timeout</code>, <code>ไม่พบสถานี BPK001</code>)</h3>
+<ul>
+<li>ทดสอบตามข้อ 3</li>
+<li>ถ้าเป็นชั่วคราว รอบถัดไป (10 นาที) จะลองใหม่เอง ไม่ต้องทำอะไร</li>
+<li>ถ้าขึ้น <code>ไม่พบสถานี</code> ต่อเนื่องหลายชั่วโมง อาจเป็นเพราะ สสน. เปลี่ยนรหัสสถานีหรือรูปแบบ API ให้ตรวจที่ https://www.thaiwater.net/water/wl</li>
+</ul>
+<h3 id="129-ได้แจ้งเตือน-ข้อมูลไม่อัปเดต-การ์ดสีเทา">12.9 ได้แจ้งเตือน &quot;ข้อมูลไม่อัปเดต&quot; (การ์ดสีเทา)</h3>
+<p>สถานีไม่ส่งค่าใหม่เกิน <code>STALE_H</code> ชั่วโมง เป็นปัญหาฝั่งสถานี ไม่ใช่ระบบเรา ระหว่างนั้นให้ตรวจสถานการณ์หน้างานเอง เมื่อสถานีกลับมาส่งค่า ระบบจะทำงานต่อเอง</p>
+<h3 id="1210-container-ขึ้น-restarting-วนไปเรื่อย-ๆ">12.10 container ขึ้น <code>Restarting</code> วนไปเรื่อย ๆ</h3>
+<p>ตามปกติไม่ควรเกิด เพราะ error ในแต่ละรอบไม่ทำให้ container หยุด ถ้าเกิด ให้ดู <code>docker compose logs --tail 100</code> แล้วตรวจว่าไฟล์ในข้อ 4.1 ครบ</p>
+<h3 id="1211-อยากเริ่มนับสถานะใหม่">12.11 อยากเริ่มนับสถานะใหม่</h3>
+<pre class="hljs"><code><div>docker compose stop
+<span class="hljs-built_in">rm</span> data/bpk_alert_state.json
+docker compose start
+</div></code></pre>
+<hr>
+<h2 id="13-ความปลอดภัย">13. ความปลอดภัย</h2>
+<ul>
+<li><code>.env</code> มี Bot token ห้ามนำขึ้น Git, file share หรือส่งทางแชต ระบบตั้ง <code>.gitignore</code> และ <code>.dockerignore</code> กันไว้แล้ว และ token จะไม่ถูกฝังอยู่ใน image</li>
+<li>ถ้าสงสัยว่า token หลุด ให้พิมพ์ <code>/revoke</code> กับ @BotFather เพื่อออก token ใหม่ แล้วแก้ <code>.env</code> และ <code>docker compose restart</code></li>
+<li>container รันด้วย user ธรรมดา (uid 1000) ไม่ใช่ root ไม่เปิดพอร์ตใด ๆ และมีแค่การเชื่อมต่อขาออก</li>
+<li>ถ้ามีคนส่ง error ที่มี URL <code>https://api.telegram.org/bot...</code> มาในแชต ให้ปิดส่วน token ก่อนทุกครั้ง</li>
+</ul>
+<hr>
+<h2 id="14-ถอนการติดตั้ง">14. ถอนการติดตั้ง</h2>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> /opt/bpk-alert
+docker compose down
+docker image <span class="hljs-built_in">rm</span> bpk-bank-alert:latest bpk-bank-alert:prev 2&gt;/dev/null
+<span class="hljs-built_in">cd</span> / &amp;&amp; <span class="hljs-built_in">sudo</span> <span class="hljs-built_in">rm</span> -rf /opt/bpk-alert      <span class="hljs-comment"># ⚠️ ลบ .env และไฟล์สถานะด้วย</span>
+</div></code></pre>
+
+</body>
+</html>
