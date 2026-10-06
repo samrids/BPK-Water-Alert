@@ -40,6 +40,16 @@ KIND_LABEL = {
     "status": "สถานะ ณ ตอนนี้ (ตามคำขอ)",
     "daily": "รายงานประจำวัน",
 }
+# สถานีที่เทียบกับระดับถนน (ROAD_LEVEL_<รหัส>) แทนตลิ่ง
+SUB_ROAD = {"ok": "ระดับน้ำยังต่ำกว่าถนน ถนนปกติ",
+            "risk": "น้ำใกล้ระดับถนน อาจมีน้ำขัง ขับช้า ๆ",
+            "avoid": "น้ำขึ้นถนนแล้ว ควรเลี่ยงเส้นทาง"}
+KIND_ROAD = dict(KIND_LABEL, near="แจ้งเตือน: น้ำใกล้ขึ้นถนน", over="ด่วน: น้ำท่วมถนน",
+                 receding="น้ำลดลงต่ำกว่าถนนแล้ว (ยังเฝ้าระวัง)")
+
+
+def is_road(d):
+    return d.get("ref_name") == "ถนน"
 
 
 @lru_cache(maxsize=None)
@@ -105,8 +115,9 @@ def dashed(c, x0, x1, y, fill, width=3, dash=16, gap=10):
         x += dash + gap
 
 
-def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None):
+def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None, ref_name="ตลิ่ง", river_bank=None):
     """กราฟเส้นระดับน้ำ พื้นหลังแบ่งโซน ผ่านได้ / เสี่ยง / เลี่ยง
+    bank: ระดับอ้างอิง (ตลิ่ง หรือถนน) ; river_bank: ตลิ่งแม่น้ำ วาดเป็นเส้นเทาเพิ่มเมื่ออ้างอิงถนน
     until: ตัดกราฟให้จบที่เวลาวัดเดียวกับตัวเลขบนการ์ด จะได้ไม่ขัดกัน"""
     px0, py0, px1, py1 = box
     pts = [(t, v) for t, v in history if v is not None and (until is None or t <= until)]
@@ -118,7 +129,7 @@ def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None):
     t_start = pts[0][0]
     vals = [v for _, v in pts]
     lo = min(min(vals), bank - near_m) - 0.25
-    hi = max(max(vals), bank) + 0.35
+    hi = max(max(vals), bank, river_bank or bank) + 0.35
     span_t = (t_end - t_start).total_seconds() or 1
 
     def X(t):
@@ -156,7 +167,11 @@ def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None):
     # เส้นตลิ่ง / เส้นเฝ้าระวัง + ป้ายโซน (นอกกราฟฝั่งขวา)
     dashed(c, px0, px1, y_bank, RED, 3)
     dashed(c, px0, px1, y_near, "#B06000", 2, 10, 10)
-    c.text(px0 + 14, y_bank - 12, f"ตลิ่ง {bank:.2f}", 26, "Bold", RED)
+    c.text(px0 + 14, y_bank - 12, f"{ref_name} {bank:.2f}", 26, "Bold", RED)
+    if river_bank is not None and river_bank > bank:
+        y_rb = Y(river_bank)
+        dashed(c, px0, px1, y_rb, MUTED, 2, 6, 8)
+        c.text(px0 + 14, y_rb - 12, f"ตลิ่ง {river_bank:.2f}", 24, "Regular", MUTED)
     lx = px1 + 16
     c.text(lx, min((py0 + y_bank) / 2, y_bank - 18), "เลี่ยง", 28, "Bold", RED, "lm")
     c.text(lx, (y_bank + y_near) / 2 if y_near - y_bank > 34 else y_near - 4, "เสี่ยง", 28, "Bold", "#B06000", "lm")
@@ -185,27 +200,30 @@ def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None):
 
 def render_card(level, kind, d, *, near_m, road="", history=None, hours=24):
     bg, fg, title, sub = LEVELS[level]
+    road_ref = is_road(d)
+    if road_ref:
+        sub = SUB_ROAD.get(level, sub)
     c = Card()
 
     # ---- แถบสถานะ ----
     c.d.rectangle(P(0, 0, W, 420), fill=bg)
     head = f"สถานี{d['name']}  ·  {d.get('river') or ''}".rstrip(" ·")
     c.text(60, 66, head, c.fit(head, 38, "ExtraBold", W - 120), "ExtraBold", fg)
-    label = "  ·  ".join(x for x in (KIND_LABEL.get(kind, ""), road) if x)
+    label = "  ·  ".join(x for x in ((KIND_ROAD if road_ref else KIND_LABEL).get(kind, ""), road) if x)
     c.text(60, 114, label, c.fit(label, 30, "Bold", W - 120), "Bold", fg)
     draw_icon(c, level, 180, 252, 108, bg, fg)
     c.text(336, 248, title, c.fit(title, 108, "ExtraBold", W - 336 - 50), "ExtraBold", fg)
     c.text(340, 322, sub, c.fit(sub, 40, "Bold", W - 340 - 50), "Bold", fg)
 
     # ---- ตัวเลข 3 ช่อง ----
-    wl, prev, tb = d["wl"], d["prev"], d["to_bank"]
+    wl, prev, tb = d["wl"], d["prev"], d["to_ref"]
     tiles = [("ระดับน้ำ", "-" if wl is None else f"{wl:.2f}", "ม.รทก.", INK)]
     if tb is None:
-        tiles.append(("ห่างตลิ่ง", "-", "ซม.", INK))
+        tiles.append((f"ห่าง{d['ref_name']}", "-", "ซม.", INK))
     elif tb > 0:
-        tiles.append(("ต่ำกว่าตลิ่ง", f"{tb * 100:.0f}", "ซม.", INK))
+        tiles.append((d["under_label"], f"{tb * 100:.0f}", "ซม.", INK))
     else:
-        tiles.append(("เกินตลิ่ง", f"{-tb * 100:.0f}", "ซม.", RED))
+        tiles.append((d["over_label"], f"{-tb * 100:.0f}", "ซม.", RED))
     diff = None if wl is None or prev is None else round((wl - prev) * 100)
     if diff is None:
         tiles.append(("แนวโน้ม", "-", "", INK))
@@ -235,8 +253,9 @@ def render_card(level, kind, d, *, near_m, road="", history=None, hours=24):
     # ---- กราฟย้อนหลัง ----
     c.text(60, 690, f"ระดับน้ำย้อนหลัง {hours} ชม.", 36, "Bold", INK)
     c.text(W - 60, 690, "หน่วย ม.รทก.", 26, "Regular", MUTED, "rs")
-    draw_chart(c, history or [], d["bank"], near_m, (110, 730, W - 140, 1130),
-               now_wl=wl, until=d.get("ts"))
+    draw_chart(c, history or [], d["ref"], near_m, (110, 730, W - 140, 1130),
+               now_wl=wl, until=d.get("ts"), ref_name=d["ref_name"],
+               river_bank=d["bank"] if road_ref else None)
 
     # ---- ข้อมูลสถานี ----
     c.d.line(P(60, 1210, W - 60, 1210), fill=LINE, width=2 * S)
@@ -259,7 +278,7 @@ SEVERITY = {"avoid": 0, "risk": 1, "stale": 2, "ok": 3}
 def render_summary(kind, items, *, title):
     """items: [{"d": ข้อมูลสถานี, "level": ok/risk/avoid/stale, "road": ชื่อจุด}] — เรียงสถานีที่อันตรายที่สุดไว้บนสุด"""
     items = sorted(items, key=lambda it: (SEVERITY[it["level"]],
-                                          99 if it["d"]["to_bank"] is None else it["d"]["to_bank"]))
+                                          99 if it["d"]["to_ref"] is None else it["d"]["to_ref"]))
     rh, gap, top = 196, 20, 330
     c = Card(top + len(items) * (rh + gap) + 90)
     worst = items[0]["level"] if items else "ok"
@@ -300,9 +319,9 @@ def render_summary(kind, items, *, title):
             status += f"  ·  {road}"
         c.text(tx, y + 160, status, c.fit(status, 30, "Bold", tmax), "Bold", LEVEL_TEXT_COLOR[lv])
 
-        xr, tb = W - 92, d["to_bank"]
+        xr, tb = W - 92, d["to_ref"]
         if tb is not None:
-            c.text(xr, y + 58, "เกินตลิ่ง" if tb <= 0 else "ต่ำกว่าตลิ่ง", 28, "Regular", MUTED, "rs")
+            c.text(xr, y + 58, d["over_label"] if tb <= 0 else d["under_label"], 28, "Regular", MUTED, "rs")
             uw = c.width("ซม.", 30, "Bold")
             c.text(xr, y + 132, "ซม.", 30, "Bold", MUTED, "rs")
             c.text(xr - uw - 10, y + 132, f"{abs(tb) * 100:.0f}", 72, "ExtraBold", RED if tb <= 0 else INK, "rs")

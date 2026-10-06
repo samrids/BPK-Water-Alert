@@ -3,10 +3,10 @@
 bpk_bank_alert.py — แจ้งเตือนระดับน้ำใกล้ล้นตลิ่ง ผ่าน Telegram (หลายสถานี เช่น 4 สถานีใน จ.ฉะเชิงเทรา)
 
 ข้อมูล: thaiwater.net (สสน.) — API waterlevel_load
-เงื่อนไข (แยกรายสถานี):
-  🟠 ใกล้ล้นตลิ่ง : ระดับน้ำต่ำกว่าตลิ่งน้อยกว่า NEAR_M (30 ซม.)
-  🔴 ล้นตลิ่ง     : ระดับน้ำเท่ากับ/สูงกว่าตลิ่ง
-  🟢 กลับสู่ปกติ  : ลดลงจนห่างตลิ่ง >= NEAR_M + HYSTERESIS_M
+เงื่อนไข (แยกรายสถานี) — เทียบกับ "ระดับอ้างอิง" = ระดับถนน ROAD_LEVEL_<รหัส> ถ้าตั้งไว้ ไม่งั้นใช้ตลิ่ง
+  🟠 ใกล้ล้นตลิ่ง/ใกล้ขึ้นถนน : ระดับน้ำต่ำกว่าระดับอ้างอิงน้อยกว่า NEAR_M (30 ซม.)
+  🔴 ล้นตลิ่ง/ท่วมถนน         : ระดับน้ำเท่ากับ/สูงกว่าระดับอ้างอิง
+  🟢 กลับสู่ปกติ              : ลดลงจนห่างระดับอ้างอิง >= NEAR_M + HYSTERESIS_M
   ⚪ ข้อมูลไม่อัปเดต : สถานีไม่ส่งค่าใหม่เกิน STALE_H ชั่วโมง
 แจ้งเฉพาะตอน "เปลี่ยนสถานะ" + แจ้งซ้ำเมื่อน้ำสูงขึ้นอีก REPEAT_STEP_M ระหว่างอยู่ในสถานะเตือน
 และส่งภาพสรุปทุกสถานีทุกวันเวลา DAILY_REPORT_TIME
@@ -86,6 +86,19 @@ def road_name(code):
     return os.getenv(f"ROAD_NAME_{code}") or (ROAD_NAME if code == STATION_CODE else "")
 
 
+def road_level(code):
+    """ระดับน้ำ (ม.รทก.) ที่น้ำเริ่มขึ้นถนนจุดที่เฝ้าระวัง: ROAD_LEVEL_<รหัส>=1.15 — ได้จากการเทียบหน้างานจริง
+    ถนนที่ต่ำ/น้ำย้อนท่อจะท่วมก่อนน้ำล้นตลิ่งของสถานี ถ้าไม่ได้ตั้ง (None) ใช้ตลิ่งตามเดิม"""
+    v = os.getenv(f"ROAD_LEVEL_{code}", "").strip()
+    if not v:
+        return None
+    try:
+        return float(v)
+    except ValueError:
+        print(f"ค่า ROAD_LEVEL_{code}={v!r} ไม่ใช่ตัวเลข ใช้ตลิ่งของสถานีแทน", file=sys.stderr)
+        return None
+
+
 def parse_hhmm(v):
     """'06:30' / '6.30' -> (6, 30) ; ว่าง = ปิดรายงานประจำวัน"""
     v = (v or "").strip().replace(".", ":")
@@ -157,12 +170,22 @@ def parse(raw):
         to_bank = num(raw.get("diff_wl_bank"))
         if to_bank is not None and "ต่ำกว่า" not in (raw.get("diff_wl_bank_text") or ""):
             to_bank = -to_bank
+    # ระดับอ้างอิงที่ใช้ตัดสินสถานะ: ถนน (ถ้าตั้ง ROAD_LEVEL_<รหัส> และต่ำกว่าตลิ่ง) ไม่งั้นใช้ตลิ่ง
+    code = st.get("tele_station_oldcode")
+    road = road_level(code)
+    if road is not None and (bank is None or road < bank):
+        ref, to_ref = road, (None if wl is None else round(road - wl, 2))
+        labels = ("ถนน", "น้ำท่วมถนน", "ต่ำกว่าถนน")
+    else:
+        ref, to_ref = bank, to_bank
+        labels = ("ตลิ่ง", "เกินตลิ่ง", "ต่ำกว่าตลิ่ง")
     t = raw.get("waterlevel_datetime") or ""
     try:
         ts = datetime.strptime(t[:16], "%Y-%m-%d %H:%M")
     except ValueError:
         ts = None
-    return {"code": st.get("tele_station_oldcode"), "name": (st.get("tele_station_name") or {}).get("th", ""),
+    return {"code": code, "ref": ref, "to_ref": to_ref, "ref_name": labels[0],
+            "over_label": labels[1], "under_label": labels[2], "name": (st.get("tele_station_name") or {}).get("th", ""),
             "river": raw.get("river_name") or "", "amphoe": (geo.get("amphoe_name") or {}).get("th", ""),
             "province": (geo.get("province_name") or {}).get("th", ""), "station_id": st.get("id"),
             "wl": wl, "prev": prev, "bank": bank, "to_bank": to_bank, "time": t, "ts": ts}
@@ -188,7 +211,7 @@ def fetch_history(station_id, hours=GRAPH_HOURS):
 
 
 def classify(d, prev_status):
-    tb = d["to_bank"]
+    tb = d["to_ref"]
     if tb is None:
         return prev_status or "normal"
     if tb <= 0:
@@ -218,10 +241,18 @@ HEADS = {
     "status": "📍 <b>สถานะ ณ ตอนนี้</b>",
     "daily": "☀️ <b>รายงานระดับน้ำประจำวัน</b>",
 }
+# สถานีที่เทียบกับระดับถนน (ROAD_LEVEL_<รหัส>)
+HEADS_ROAD = dict(HEADS, near="🟠 <b>เตือน: น้ำใกล้ขึ้นถนน</b>", over="🔴 <b>ด่วน: น้ำท่วมถนน</b>",
+                  receding="🟠 <b>น้ำลดลงต่ำกว่าถนนแล้ว (ยังเฝ้าระวัง)</b>")
 
 
-def bank_text(tb):
-    return "-" if tb is None else (f"เกินตลิ่ง {abs(tb)*100:.0f} ซม." if tb <= 0 else f"ต่ำกว่าตลิ่ง {tb*100:.0f} ซม.")
+def head(kind, d):
+    return (HEADS_ROAD if d["ref_name"] == "ถนน" else HEADS)[kind]
+
+
+def bank_text(d):
+    tb = d["to_ref"]
+    return "-" if tb is None else f"{d['over_label'] if tb <= 0 else d['under_label']} {abs(tb)*100:.0f} ซม."
 
 
 def trend_text(d):
@@ -234,11 +265,14 @@ def trend_text(d):
 def message(kind, d):
     trend = trend_text(d)
     wl = "-" if d["wl"] is None else f"{d['wl']:.2f}"
-    bank = "-" if d["bank"] is None else f"{d['bank']:.2f}"
-    return (f"{HEADS[kind]}\n"
-            f"สถานี{d['name']} ({d['code']}) {d['river']}\n"
+    ref = "-" if d["ref"] is None else f"{d['ref']:.2f}"
+    road = road_name(d["code"])
+    bank = (f"ตลิ่งแม่น้ำ: {d['bank']:.2f} ม.รทก.\n"
+            if d["ref_name"] == "ถนน" and d["bank"] is not None else "")
+    return (f"{head(kind, d)}\n"
+            f"สถานี{d['name']} ({d['code']}) {d['river']}{f' · {road}' if road else ''}\n"
             f"ระดับน้ำ: <b>{wl} ม.รทก.</b>{f' ({trend})' if trend else ''}\n"
-            f"ตลิ่ง: {bank} ม.รทก. → <b>{bank_text(d['to_bank'])}</b>\n"
+            f"{d['ref_name']}: {ref} ม.รทก. → <b>{bank_text(d)}</b>\n{bank}"
             f"เวลาวัด: {d['time']}\n"
             f'<a href="{WEB_URL}">thaiwater.net</a>')
 
@@ -254,7 +288,7 @@ def summary_text(kind, items):
     lines = [f"{HEADS[kind]} — {area_title(items)}"]
     for it in items:
         d = it["d"]
-        lines.append(f"{LEVEL_EMOJI[it['level']]} {d['name']} — {bank_text(d['to_bank'])}")
+        lines.append(f"{LEVEL_EMOJI[it['level']]} {d['name']} — {bank_text(d)}")
     stamps = [it["d"]["ts"] for it in items if it["d"]["ts"]]
     if stamps:
         lines.append(f"ข้อมูล ณ {max(stamps):%Y-%m-%d %H:%M}")
@@ -587,7 +621,7 @@ def main():
         d = it["d"]
         wl = "-" if d["wl"] is None else f"{d['wl']:.2f}"
         print(f"{now:%Y-%m-%d %H:%M} {d['code']:<7} {d['name'][:22]:<22} {wl:>6} ม. | "
-              f"{bank_text(d['to_bank']):<20} | {it['level']}")
+              f"{bank_text(d):<20} | {it['level']}")
     print(f"{now:%Y-%m-%d %H:%M} ส่งแจ้งเตือน {len(alerts)} ข้อความ{' + รายงานประจำวัน' if daily else ''}", flush=True)
 
 
@@ -607,8 +641,8 @@ def preview(raws):
                "avoid": ("over", -0.10), "stale": ("stale", None)}
     for level, (kind, tb) in samples.items():
         dd, hist = dict(d), [p for p in history if p[1] is not None]
-        if tb is not None and d["bank"] is not None and hist:
-            dd["to_bank"], dd["wl"] = tb, round(d["bank"] - tb, 2)
+        if tb is not None and d["ref"] is not None and hist:
+            dd["to_ref"], dd["wl"] = tb, round(d["ref"] - tb, 2)
             dd["prev"] = dd["wl"] - 0.03
             # ต่อหางกราฟให้วิ่งขึ้นไปถึงค่าตัวอย่าง จะได้เห็นเส้นเข้าโซน
             t0, v0 = hist[-1]
