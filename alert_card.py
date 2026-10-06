@@ -5,6 +5,7 @@ alert_card.py — วาดภาพการ์ดแจ้งเตือน�
 ใช้ฟอนต์ Sarabun ในโฟลเดอร์ fonts/ (OFL) และต้องมี Pillow ที่เปิด raqm เพื่อจัดสระ/วรรณยุกต์ไทยถูกตำแหน่ง
 """
 import io
+from collections import Counter
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -37,6 +38,7 @@ KIND_LABEL = {
     "stale": "สถานีไม่อัปเดตข้อมูล",
     "test": "ทดสอบระบบแจ้งเตือน",
     "status": "สถานะ ณ ตอนนี้ (ตามคำขอ)",
+    "daily": "รายงานประจำวัน",
 }
 
 
@@ -50,8 +52,9 @@ def P(*v):
 
 
 class Card:
-    def __init__(self):
-        self.img = Image.new("RGBA", P(W, H), PAPER)
+    def __init__(self, h=H):
+        self.h = h
+        self.img = Image.new("RGBA", P(W, h), PAPER)
         self.d = ImageDraw.Draw(self.img)
 
     def text(self, x, y, txt, size, weight="Bold", fill=INK, anchor="ls"):
@@ -74,7 +77,7 @@ class Card:
 
     def png(self):
         out = io.BytesIO()
-        self.img.convert("RGB").resize((W, H), Image.LANCZOS).save(out, "PNG", optimize=True)
+        self.img.convert("RGB").resize((W, self.h), Image.LANCZOS).save(out, "PNG", optimize=True)
         return out.getvalue()
 
 
@@ -180,16 +183,16 @@ def draw_chart(c, history, bank, near_m, box, now_wl=None, until=None):
     c.d.rectangle(P(px0, py0, px1, py1), outline=LINE, width=2 * S)
 
 
-def render_card(level, kind, d, *, station_code, near_m, road="", history=None, hours=24):
+def render_card(level, kind, d, *, near_m, road="", history=None, hours=24):
     bg, fg, title, sub = LEVELS[level]
     c = Card()
 
     # ---- แถบสถานะ ----
     c.d.rectangle(P(0, 0, W, 420), fill=bg)
-    label = KIND_LABEL.get(kind, "")
-    if road:
-        label = f"{label}  ·  {road}" if label else road
-    c.text(60, 74, label, c.fit(label, 34, "Bold", W - 120), "Bold", fg)
+    head = f"สถานี{d['name']}  ·  {d.get('river') or ''}".rstrip(" ·")
+    c.text(60, 66, head, c.fit(head, 38, "ExtraBold", W - 120), "ExtraBold", fg)
+    label = "  ·  ".join(x for x in (KIND_LABEL.get(kind, ""), road) if x)
+    c.text(60, 114, label, c.fit(label, 30, "Bold", W - 120), "Bold", fg)
     draw_icon(c, level, 180, 252, 108, bg, fg)
     c.text(336, 248, title, c.fit(title, 108, "ExtraBold", W - 336 - 50), "ExtraBold", fg)
     c.text(340, 322, sub, c.fit(sub, 40, "Bold", W - 340 - 50), "Bold", fg)
@@ -223,8 +226,11 @@ def render_card(level, kind, d, *, station_code, near_m, road="", history=None, 
                 pts = [(vx, ty + 92), (vx + 44, ty + 92), (vx + 22, ty + 136)]
             c.d.polygon([tuple(P(*p)) for p in pts], fill=col)
             vx += 58
-        c.text(vx, ty + 140, val, 76, "ExtraBold", col)
-        c.text(vx + c.width(val, 76, "ExtraBold") + 10, ty + 140, unit, 32, "Bold", MUTED)
+        # ย่อตัวเลขเมื่อยาวเกินช่อง (เช่น -0.78 หรือ 244)
+        room = x + tw - 20 - vx - c.width(unit, 32, "Bold") - 10
+        vs = c.fit(val, 76, "ExtraBold", room, min_size=48)
+        c.text(vx, ty + 140, val, vs, "ExtraBold", col)
+        c.text(vx + c.width(val, vs, "ExtraBold") + 10, ty + 140, unit, 32, "Bold", MUTED)
 
     # ---- กราฟย้อนหลัง ----
     c.text(60, 690, f"ระดับน้ำย้อนหลัง {hours} ชม.", 36, "Bold", INK)
@@ -234,7 +240,76 @@ def render_card(level, kind, d, *, station_code, near_m, road="", history=None, 
 
     # ---- ข้อมูลสถานี ----
     c.d.line(P(60, 1210, W - 60, 1210), fill=LINE, width=2 * S)
-    c.text(60, 1262, f"สถานี{d['name']} ({station_code}) · แม่น้ำบางปะกง", 38, "Bold", INK)
+    place = "  ·  ".join(x for x in (d.get("river"), d.get("amphoe") and f"อ.{d['amphoe']}",
+                                     d.get("province") and f"จ.{d['province']}") if x)
+    foot = f"สถานี{d['name']} ({d.get('code', '')})  ·  {place}"
+    c.text(60, 1262, foot, c.fit(foot, 34, "Bold", W - 120), "Bold", INK)
     c.text(60, 1312, f"เวลาวัด {d['time'] or '-'}  ·  ข้อมูล thaiwater.net (สสน.)", 30, "Regular",
            RED if level == "stale" else MUTED)
+    return c.png()
+
+
+# ---------------- ภาพสรุปหลายสถานี ----------------
+LEVEL_SHORT = {"ok": "ผ่านได้ปกติ", "risk": "ผ่านได้ แต่เสี่ยง", "avoid": "เลี่ยงเส้นทาง", "stale": "ข้อมูลไม่อัปเดต"}
+LEVEL_COLOR = {"ok": GREEN, "risk": AMBER, "avoid": RED, "stale": GREY}
+LEVEL_TEXT_COLOR = {"ok": GREEN, "risk": "#B06000", "avoid": RED, "stale": GREY}   # สีส้มเข้มขึ้นให้อ่านบนพื้นเทา
+SEVERITY = {"avoid": 0, "risk": 1, "stale": 2, "ok": 3}
+
+
+def render_summary(kind, items, *, title):
+    """items: [{"d": ข้อมูลสถานี, "level": ok/risk/avoid/stale, "road": ชื่อจุด}] — เรียงสถานีที่อันตรายที่สุดไว้บนสุด"""
+    items = sorted(items, key=lambda it: (SEVERITY[it["level"]],
+                                          99 if it["d"]["to_bank"] is None else it["d"]["to_bank"]))
+    rh, gap, top = 196, 20, 330
+    c = Card(top + len(items) * (rh + gap) + 90)
+    worst = items[0]["level"] if items else "ok"
+    bg, fg = LEVELS[worst][0], LEVELS[worst][1]
+
+    # ---- แถบหัว: สีตามสถานีที่แย่ที่สุด ----
+    c.d.rectangle(P(0, 0, W, 290), fill=bg)
+    c.text(60, 72, KIND_LABEL.get(kind, ""), 32, "Bold", fg)
+    stamps = [it["d"]["ts"] for it in items if it["d"].get("ts")]
+    if stamps:
+        t = max(stamps)
+        c.text(W - 60, 72, f"ข้อมูล {t:%H:%M} น. {t.day} {THAI_MONTHS[t.month - 1]}", 30, "Bold", fg, "rs")
+    c.text(60, 168, title, c.fit(title, 76, "ExtraBold", W - 120), "ExtraBold", fg)
+    counts = Counter(it["level"] for it in items)
+    tally = "   ·   ".join(f"{LEVEL_SHORT[lv]} {counts[lv]}" for lv in ("avoid", "risk", "stale", "ok") if counts[lv])
+    c.text(60, 240, tally, c.fit(tally, 36, "Bold", W - 120), "Bold", fg)
+
+    # ---- แถวละสถานี ----
+    for i, it in enumerate(items):
+        d, lv, road = it["d"], it["level"], it.get("road") or ""
+        y = top + i * (rh + gap)
+        cy = y + rh / 2
+        col = LEVEL_COLOR[lv]
+        c.d.rounded_rectangle(P(60, y, W - 60, y + rh), radius=24 * S, fill=col)          # แถบสีซ้าย
+        c.d.rounded_rectangle(P(76, y, W - 60, y + rh), radius=24 * S, fill=TILE,
+                              corners=(False, True, True, False))
+        draw_icon(c, lv, 146, cy, 42, INK if lv == "risk" else PAPER, col)
+
+        tx, tmax = 214, 560
+        name = f"สถานี{d['name']}"
+        c.text(tx, y + 66, name, c.fit(name, 40, "Bold", tmax), "Bold", INK)
+        place = "  ·  ".join(x for x in (d.get("river"), d.get("amphoe") and f"อ.{d['amphoe']}") if x)
+        c.text(tx, y + 110, place, c.fit(place, 28, "Regular", tmax), "Regular", MUTED)
+        status = LEVEL_SHORT[lv]
+        if lv == "stale" and d.get("ts"):
+            status += f" (ล่าสุด {d['ts']:%H:%M})"
+        if road:
+            status += f"  ·  {road}"
+        c.text(tx, y + 160, status, c.fit(status, 30, "Bold", tmax), "Bold", LEVEL_TEXT_COLOR[lv])
+
+        xr, tb = W - 92, d["to_bank"]
+        if tb is not None:
+            c.text(xr, y + 58, "เกินตลิ่ง" if tb <= 0 else "ต่ำกว่าตลิ่ง", 28, "Regular", MUTED, "rs")
+            uw = c.width("ซม.", 30, "Bold")
+            c.text(xr, y + 132, "ซม.", 30, "Bold", MUTED, "rs")
+            c.text(xr - uw - 10, y + 132, f"{abs(tb) * 100:.0f}", 72, "ExtraBold", RED if tb <= 0 else INK, "rs")
+        if d["wl"] is not None and d["prev"] is not None:
+            diff = round((d["wl"] - d["prev"]) * 100)
+            trend = f"น้ำขึ้น {diff} ซม." if diff > 0 else f"น้ำลง {-diff} ซม." if diff < 0 else "ทรงตัว"
+            c.text(xr, y + 174, trend, 26, "Bold", RED if diff > 0 else GREEN if diff < 0 else MUTED, "rs")
+
+    c.text(60, c.h - 40, "ข้อมูล thaiwater.net (สสน.)  ·  กดปุ่มชื่อสถานีด้านล่างเพื่อดูกราฟ", 28, "Regular", MUTED)
     return c.png()
