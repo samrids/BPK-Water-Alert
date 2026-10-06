@@ -17,5 +17,6 @@ COPY bpk_bank_alert.py alert_card.py ./
 RUN useradd -r -u 1000 app && mkdir -p /app/data && chown app /app/data
 USER app
 
-# เช็กทุก INTERVAL_SEC วินาที — รอบไหน error ก็แค่ log แล้ววนต่อ
-CMD ["sh", "-c", "while true; do python bpk_bank_alert.py; sleep ${INTERVAL_SEC:-600}; done"]
+# เช็กทุก INTERVAL_SEC วินาที ตรงนาฬิกา (600 = xx:00, xx:10, xx:20 ...) รายงานประจำวันจะออกตรงเวลา
+# รอบไหน error ก็แค่ log แล้ววนต่อ
+CMD ["sh", "-c", "while true; do python bpk_bank_alert.py; n=${INTERVAL_SEC:-600}; sleep $(( n - $(date +%s) % n )); done"]
